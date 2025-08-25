@@ -1,9 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Only create client if we have valid credentials
+export const supabase = supabaseUrl && supabaseAnonKey 
+  ? createClient(supabaseUrl, supabaseAnonKey)
+  : null
 
 // Database types matching your email_subscribers table
 export interface EmailSubscriber {
@@ -23,6 +26,10 @@ export async function addEmailSubscriber(
   userAgent?: string,
   ipAddress?: string
 ): Promise<void> {
+  if (!supabase) {
+    throw new Error('Supabase client not configured. Please check your environment variables.')
+  }
+
   const { error } = await supabase
     .from('email_subscribers')
     .insert([
@@ -55,6 +62,10 @@ export async function addEmailSubscriber(
 }
 
 export async function checkEmailExists(email: string): Promise<boolean> {
+  if (!supabase) {
+    throw new Error('Supabase client not configured. Please check your environment variables.')
+  }
+
   const { data, error } = await supabase
     .from('email_subscribers')
     .select('id')
